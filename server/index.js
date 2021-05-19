@@ -20,11 +20,13 @@ client.on("connect", function () {
   client.subscribe("siot_mqtt/2/#", mqtt_subscribe);
   client.subscribe("siot_mqtt/3/#", mqtt_subscribe);
   client.subscribe("siot_mqtt/4/#", mqtt_subscribe);
+  //client.subscribe("siot_mqtt/scores/#", mqtt_subscribe);
+  //client.subscribe("siot_mqtt/target/#", mqtt_subscribe);
 });
 
 client.on("message", function (topic, message) {
   // message is Buffer
-  console.log(topic);
+  //console.log(topic);
   topic_list = topic.split("/");
   console.log(topic_list);
   // base - team - member
@@ -34,9 +36,14 @@ client.on("message", function (topic, message) {
     let team = topic_list[1];
     let member_name = topic_list[2];
     if (!(team in score_tracker)) {
-      score_tracker[team] = {}; // create
+      score_tracker[team] = {
+        current_score: 0,
+        current_reading: 0,
+        target_val: 0,
+        members: {},
+      }; // create
     }
-    score_tracker[team][member_name] = parseInt(message);
+    score_tracker[team]["members"][member_name] = parseInt(message);
     console.log(score_tracker);
 
     // publishing team score
@@ -49,17 +56,70 @@ client.on("message", function (topic, message) {
   //client.end()
 });
 
+function clear_siot_mqtt() {
+  const result = 0;
+  const team = 1;
+  client.publish(`siot_mqtt/${team}/current_reading`, result.toString(), {
+    retain: false,
+  });
+}
+
+/*
+ * This function gets all the current team values
+ * and publishes them to the current_reading topic
+ */
+
 function team_score_publish(team) {
-  const result = sumValues(score_tracker[team]);
+  // sum the values and update the global tracker
+  const result = sumValues(score_tracker[team]["members"]);
+  score_tracker[team]["current_reading"] = result;
+
   client.publish(
-    `siot_mqtt/scores/${team}/current_team_value`,
+    `siot_mqtt/target/${team}/current_reading`,
     result.toString(),
     {
-      retain: true,
+      retain: false,
     }
   );
+}
 
-  // sum up all saved values
+/*
+ * Whenever this function ticks the difference in the target and readings are taken
+ * and posted to the scores
+ */
+
+function score_tick(team) {
+  const currReading = sumValues(score_tracker[team]["current_reading"]);
+  const currScore = score_tracker[team]["current_score"];
+  const newScore =
+    Math.abs(score_tracker[team]["target_val"] - currReading) + currScore;
+
+  // update with new score
+  score_tracker[team]["current_score"] = newScore;
+
+  // publish result
+  client.publish(`siot_mqtt/scores/${team}/current_score`, score.toString(), {
+    retain: false,
+  });
+}
+
+/*
+ * This function sets and changes the target score for the team
+ */
+function target_tick(team) {
+  const target_val = getRndInteger(250, 900);
+  score_tracker[team]["target_val"] = target_val;
+  client.publish(
+    `siot_mqtt/target/${team}/current_target`,
+    target_val.toString(),
+    {
+      retain: false,
+    }
+  );
+}
+
+function getRndInteger(min, max) {
+  return Math.floor(Math.random() * (max - min)) + min;
 }
 
 function mqtt_subscribe(err, granted) {
@@ -70,3 +130,6 @@ function mqtt_subscribe(err, granted) {
 }
 
 const sumValues = (obj) => Object.values(obj).reduce((a, b) => a + b);
+
+//setInterval(score_tick, 1000, 1); // tick every second to capture the score.
+//setInterval(target_tick, 10000, 1); // tick the target, cancel after 1 min
