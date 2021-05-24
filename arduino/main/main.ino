@@ -1,12 +1,172 @@
-void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(115200);
-  Serial.println("Start");
+/* Adapted from the MQTT_ESP8266 example sketch*/
+#include <ESP8266WiFi.h>
+#include <PubSubClient.h>
+#include "secret.h"
 
+#define UPPER_LIMIT 100
+
+// Update these with values suitable for your network.
+
+const char* mqtt_server = "broker.hivemq.com";
+
+int target = 0;
+int global_score = 0;
+int counter = 0;
+String incomingByte = ""; // for incoming serial data
+int command = 0;
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+unsigned long lastMsg = 0;
+#define MSG_BUFFER_SIZE (50)
+char msg[MSG_BUFFER_SIZE];
+int value = 0;
+
+void setup_wifi() {
+  delay(10);
+  // We start by connecting to a WiFi network
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  randomSeed(micros());
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+  pinMode(A0,INPUT);
+}
+
+/*
+ * This function receives all the messages of the topics that we subscribe to
+ */
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  //Serial.print("Message arrived [");
+  //Serial.print(topic);
+  //Serial.print("] ");
+  //for (int i = 0; i < length; i++) {
+  //  Serial.print((char)payload[i]);
+  //}
+  //Serial.println();
+  target = atoi((char*)payload);
+
+  // Add match statement here
+}
+
+/*
+ * This function reconnects to the MQTT broker if the connection is dropped
+ */
+void reconnect() {
+  // Loop until we're reconnected
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    // Create a random client ID
+    String clientId = "ESP8266Client-";
+    clientId += String(random(0xffff), HEX);
+    // Attempt to connect
+    if (client.connect(clientId.c_str())) {
+      Serial.println("connected");
+      // Once connected, publish an announcement...
+      //client.publish("outTopic", "hello world");
+      // ... and resubscribe
+      client.subscribe("siot_mqtt/target/0/current_target");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
+}
+
+/*
+ * This function computes a score based on the target
+ */
+
+int score_add(int target, int current) {
+  int result = target - current;
+  result = abs(result); 
+  if(result>=UPPER_LIMIT) {
+    result = UPPER_LIMIT;
+  }
+  result = map(result,0,UPPER_LIMIT,10,-1); // remap range to 0-20
+  return result;
+}
+
+/*
+ * This function resets the global score to 0
+ */
+
+void score_zero() {
+  global_score = 0;
+}
+
+void setup() {
+  Serial.begin(115200);
+  setup_wifi(); // start WIFI
+  client.setServer(mqtt_server, 1883);
+  client.setCallback(callback);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
 
+  unsigned long now = millis();
+  // todo: send a message via the serial terminal to start and reset
+
+  if (Serial.available() > 0) {
+    // read the incoming byte:
+    incomingByte = Serial.readStringUntil('\n'); //convert it to number 
+    command = (int)(incomingByte[0]-'0'); // 0: number 1: \n
+
+    if (command==0) {
+      // reset the counter and the global score
+      //Serial.println("Reset");
+      counter = 0;
+      global_score = 0;
+    }
+    if (command==1) {
+      //Serial.println("Start");
+    }
+    while (Serial.read() >= 0); //flush the buffer to ignore queued commands
+  }
+  
+  if (now - lastMsg > 500) {
+    Serial.print("Target:");
+    Serial.print(target);
+    Serial.print("\t");
+    int light_level = analogRead(A0);
+    Serial.print("Current:");
+    Serial.print(light_level);
+    Serial.print("\t");
+    
+    if ((command==1) && (counter<60)) {
+      global_score = global_score + score_add(target,light_level);
+      
+      counter++;
+      Serial.print("Score:");
+    }
+    else {
+      Serial.print("Last_Score(");
+      Serial.print(global_score);
+      Serial.print("):");
+    }
+    
+    Serial.println(global_score);
+
+    lastMsg = now;
+
+  }
 }

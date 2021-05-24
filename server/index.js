@@ -2,7 +2,11 @@ var mqtt = require("mqtt");
 //var client     = mqtt.connect('mqtt://test.mosquitto.org')
 var client = mqtt.connect("mqtt://broker.hivemq.com"); // alternative broker
 
-score_tracker = {};
+score_tracker = {
+  0: {
+    target_val: 0,
+  },
+};
 
 client.on("connect", function () {
   client.subscribe("siot_mqtt/hello", function (err) {
@@ -109,6 +113,7 @@ function score_tick(team) {
 function target_tick(team) {
   const target_val = getRndInteger(250, 900);
   score_tracker[team]["target_val"] = target_val;
+  console.log(`Target value set to: ${target_val}`);
   client.publish(
     `siot_mqtt/target/${team}/current_target`,
     target_val.toString(),
@@ -132,4 +137,4 @@ function mqtt_subscribe(err, granted) {
 const sumValues = (obj) => Object.values(obj).reduce((a, b) => a + b);
 
 //setInterval(score_tick, 1000, 1); // tick every second to capture the score.
-//setInterval(target_tick, 10000, 1); // tick the target, cancel after 1 min
+setInterval(target_tick, 10000, 0); // tick the target value, update every 30 seconds, update team 0 - global

@@ -15,11 +15,12 @@ The code is split up into two portions: the server and the client side. The clie
 |`siot_mqtt/target/[team]/current_target` | Current target for the team |
 |`siot_mqtt/[team]/[team_member]`| The input of each team member |
 
-
 # Embedded 
-The embedded part of this project uses a `Node 0.9` ESP8266 board with a CP2102 IC.
+The embedded part of this project uses a `NodeMCU 0.9` ESP8266 board with a CP2102 IC.
 
-> The CP2102 IC is very important. A lot of boards being sold are still using the old CH340G USB-UART IC, which is incompatible with many modern systems, requiring installs of drivers from sketchy websites. The CP2102 is made by Silicon Labs and has worked on Linux, Windows, and Mac devices
+> The CP2102 IC is very important. A lot of boards being sold are still using the old CH340G USB-UART IC, which is incompatible with many modern systems, requiring installs of drivers from sketchy websites. The CP2102 is made by Silicon Labs and has worked on Linux, Windows, and Mac devices. Link: https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers
+
+
 
 ## Install
 1. Install the Arduino IDE from https://www.arduino.cc/en/software
@@ -37,19 +38,20 @@ The embedded part of this project uses a `Node 0.9` ESP8266 board with a CP2102 
 
 
 # Arduino Challenges
-1. Wiring up the project for LEDs
-2. Blinking an LED
-3. Wiring up the project for buttons
-4. Blinking the LED with button inputs
-5. Wiring up the project for LDRs
-6. Reading the LDR value in Serial Monitor
-7. Reading the LDR value in Serial Plotter
-8. Connecting to WiFi
-9. Reading topics
-10. Posting values + reading other people's topics
-11. 
+1. Wiring up the project for LEDs - not done
+2. Blinking an LED - done
+3. Wiring up the project for buttons - not done
+4. Blinking the LED with button inputs - not done
+5. Wiring up the project for LDRs - not done
+6. Reading the LDR value in Serial Monitor - done
+7. Reading the LDR value in Serial Plotter - done
+8. Connecting to WiFi - done
+9. Reading topics - done
+10. Posting values + reading other people's topics - not done
+
 
 
 # Todo
 1. Need to restrict topics related to the score and target portion
 2. Arduino needs to read the incoming topic 
+3. Create a static website for instructions
