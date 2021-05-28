@@ -11,13 +11,9 @@ score_tracker = {
 client.on("connect", function () {
   client.subscribe("siot_mqtt/hello", function (err) {
     if (!err) {
-      client.publish(
-        "siot_mqtt/hello",
-        "Hello to the SIOT MQTT game! Make sure that your team and name are set correctly!",
-        {
-          retain: true,
-        }
-      );
+      client.publish("siot_mqtt/hello", "Hello from SIOT over MQTT!", {
+        retain: true,
+      });
     }
   });
   client.subscribe("siot_mqtt/1/#", mqtt_subscribe);

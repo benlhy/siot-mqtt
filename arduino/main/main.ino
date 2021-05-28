@@ -52,10 +52,10 @@ void callback(char* topic, byte* payload, unsigned int length) {
   //Serial.print("Message arrived [");
   //Serial.print(topic);
   //Serial.print("] ");
-  //for (int i = 0; i < length; i++) {
-  //  Serial.print((char)payload[i]);
-  //}
-  //Serial.println();
+  for (int i = 0; i < length; i++) {
+    Serial.print((char)payload[i]);
+  }
+  Serial.println();
   target = atoi((char*)payload);
 
   // Add match statement here
@@ -74,10 +74,13 @@ void reconnect() {
     // Attempt to connect
     if (client.connect(clientId.c_str())) {
       Serial.println("connected");
-      // Once connected, publish an announcement...
-      //client.publish("outTopic", "hello world");
-      // ... and resubscribe
-      client.subscribe("siot_mqtt/target/0/current_target");
+      // TODO: add new subscriptions here
+      
+      client.subscribe("siot_mqtt/hello");
+
+      // TODO: get the highest score!
+      //client.subscribe("siot_mqtt/target/0/current_target");
+      
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -124,7 +127,7 @@ void loop() {
   client.loop();
 
   unsigned long now = millis();
-  // todo: send a message via the serial terminal to start and reset
+  
 
   if (Serial.available() > 0) {
     // read the incoming byte:
@@ -133,7 +136,6 @@ void loop() {
 
     if (command==0) {
       // reset the counter and the global score
-      //Serial.println("Reset");
       counter = 0;
       global_score = 0;
     }
@@ -144,12 +146,22 @@ void loop() {
   }
   
   if (now - lastMsg > 500) {
-    Serial.print("Target:");
-    Serial.print(target);
-    Serial.print("\t");
+    lastMsg = now;
+    
     int light_level = analogRead(A0);
     Serial.print("Current:");
     Serial.print(light_level);
+    Serial.print("\t");
+
+    // TODO: publish your LDR readings here
+
+
+    // TODO: uncomment the code below to start your scoring!
+
+
+    /*
+    Serial.print("Target:");
+    Serial.print(target);
     Serial.print("\t");
     
     if ((command==1) && (counter<60)) {
@@ -165,8 +177,9 @@ void loop() {
     }
     
     Serial.println(global_score);
+    */
 
-    lastMsg = now;
+    
 
   }
 }
