@@ -1,14 +1,21 @@
 /* Adapted from the MQTT_ESP8266 example sketch*/
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
-#include "secret.h"
-
 #define UPPER_LIMIT 100
+//#include "secret.h"
 
-// Update these with values suitable for your network.
+// 3.1 TODO Change the define to match the pin you are using
+#define LED D6
 
+// 3.1 TODO: Add your WIFI password here!
+const char* password = "";
+const char* ssid = "";
+
+// The broker we are using
 const char* mqtt_server = "broker.hivemq.com";
 
+
+// Global values
 int target = 0;
 int global_score = 0;
 int counter = 0;
@@ -23,6 +30,8 @@ char msg[MSG_BUFFER_SIZE];
 int value = 0;
 
 void setup_wifi() {
+
+
   delay(10);
   // We start by connecting to a WiFi network
   Serial.println();
@@ -42,6 +51,7 @@ void setup_wifi() {
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
   pinMode(A0,INPUT);
+  pinMode(LED,OUTPUT);
 }
 
 /*
@@ -56,7 +66,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     Serial.print((char)payload[i]);
   }
   Serial.println();
-  target = atoi((char*)payload);
+  target = atoi((char*)payload); // convert our payload to a numerical value
 
   // Add match statement here
 }
@@ -74,12 +84,19 @@ void reconnect() {
     // Attempt to connect
     if (client.connect(clientId.c_str())) {
       Serial.println("connected");
-      // TODO: add new subscriptions here
-      
-      client.subscribe("siot_mqtt/hello");
+      // 3.1 TODO: add new subscription to your partner's topic
 
-      // TODO: get the highest score!
-      //client.subscribe("siot_mqtt/target/0/current_target");
+      // 3.1 TODO: uncommment this line to subscribe to siot_mqtt/hello
+      // client.subscribe("siot_mqtt/hello");
+
+
+      // 3.2 TODO: subscribe to the siot_mqtt/target/0/current_target topic
+
+
+
+
+
+      
       
     } else {
       Serial.print("failed, rc=");
@@ -104,15 +121,6 @@ int score_add(int target, int current) {
   result = map(result,0,UPPER_LIMIT,10,-1); // remap range to 0-20
   return result;
 }
-
-/*
- * This function resets the global score to 0
- */
-
-void score_zero() {
-  global_score = 0;
-}
-
 void setup() {
   Serial.begin(115200);
   setup_wifi(); // start WIFI
@@ -127,7 +135,8 @@ void loop() {
   client.loop();
 
   unsigned long now = millis();
-  
+
+  // If there is something coming in through the serial port
 
   if (Serial.available() > 0) {
     // read the incoming byte:
@@ -153,11 +162,22 @@ void loop() {
     Serial.print(light_level);
     Serial.print("\t");
 
-    // TODO: publish your LDR readings here
+    // publish LDR value
+    snprintf (msg, MSG_BUFFER_SIZE, "%ld", light_level);
+    Serial.print("Publishing LDR value: ");
+    Serial.println(msg);
+
+    // 3.1 TODO: uncomment and modify to publish your LDR readings
+    //client.publish("siot_mqtt/0/ben", msg);
 
 
-    // TODO: uncomment the code below to start your scoring!
+    // 3.1 TODO: uncomment to change your LED's output value
+    //Serial.print("Setting LED value to: ");
+    //Serial.println(target);
+    //analogWrite(LED,target);
 
+
+    // 3.2 TODO: uncomment the code below to start your scoring!
 
     /*
     Serial.print("Target:");
