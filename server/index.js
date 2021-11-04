@@ -110,13 +110,9 @@ function target_tick(team) {
   const target_val = getRndInteger(250, 900);
   score_tracker[team]["target_val"] = target_val;
   console.log(`Target value set to: ${target_val}`);
-  client.publish(
-    `siot_mqtt/target/${team}/current_target`,
-    target_val.toString(),
-    {
-      retain: false,
-    }
-  );
+  client.publish(`siot_mqtt/${team}/target`, target_val.toString(), {
+    retain: false,
+  });
 }
 
 function getRndInteger(min, max) {
